@@ -1,0 +1,125 @@
+<t t-name="account.report_invoice_document">
+    <t t-call="web.external_layout">
+        <!-- Cabecera con logo y datos de la empresa -->
+        <div class="container-fluid" style="margin-bottom: 20px;">
+            <div class="row">
+                <div class="col-4">
+                    <img 
+                        src="https://i.giphy.com/media/v1.Y2lkPTc5MGI3NjExajY4NTgzZWtzcTJwdnVhdjJkMnIzc3kyZzd5bnBzZWkzbWZ6OXJqcCZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/xZwhGCY50GpJNmcyQ9/giphy.gif" 
+                        alt="Factura Pagada" 
+                        style="max-width: 100%; height: auto;"
+                    />
+                </div>
+                <div class="col-8">
+                    <h2><span t-field="o.company_id.name"/></h2>
+                    <p><span t-field="o.company_id.street"/> <t t-if="o.company_id.street2">, <span t-field="o.company_id.street2"/></t></p>
+                    <p>Teléfono: <span t-field="o.company_id.phone"/></p>
+                    <p>Email: <span t-field="o.company_id.email"/></p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Datos del cliente usando CSS Grid -->
+        <div class="row">
+            <div class="col-6">
+                <div style="display: grid; grid-template-columns: repeat(2, 1fr); grid-gap: 10px;">
+                    <div><strong>Nombre:</strong></div>
+                    <div><span t-field="o.partner_id.name"/></div>
+                    <div><strong>Dirección:</strong></div>
+                    <div><span t-field="o.partner_id.contact_address"/></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Mensajes según el estado de la factura --> 
+        <div>
+            <t t-if="o.state == 'draft'">
+                <div>Factura <strong><span t-field="o.name"/></strong> a la espera de pago.</div>
+            </t>
+            <t t-if="o.state == 'paid'">
+                <div>Factura <strong><span t-field="o.name"/></strong> pagada: <strong><t t-esc="'INV/2024/' + o.id"/></strong></div>
+            </t>
+        </div>
+
+        <!-- Tabla de resumen de productos -->
+        <table class="table table-sm">
+            <thead>
+                <tr>
+                    <th>Nombre</th>
+                    <th>Unidades</th>
+                    <th>Tasas</th>
+                    <th>Precio</th>
+                    <th>Precio de las Tasas</th>
+                    <th>Total con Tasas</th>
+                </tr>
+            </thead>
+            <tbody>
+                <t t-set="total_units" t-value="0"/>
+                <t t-set="total_tax" t-value="0.0"/>
+                <t t-foreach="o.invoice_line_ids" t-as="line">
+                    <tr>
+                        <td><span t-field="line.product_id.name"/></td>
+                        <td><span t-field="line.quantity"/></td>
+                        <td>
+                            <t t-set="tax_names" t-value="[]"/>
+                            <t t-foreach="line.tax_ids" t-as="tax">
+                                <t t-if="tax_names">, </t> <!-- separado por nombres -->
+                                <t t-set="tax_names" t-value="tax_names + [tax.name]"/>
+                            </t>
+                            <span><t t-esc="', '.join(tax_names)"/></span> <!--tasas -->
+                        </td>
+                        <td><span t-field="line.price_unit"/></td>
+                        <td>
+                            <span t-esc="line.quantity * line.price_unit * (line.tax_ids[0].amount / 100) if line.tax_ids else 0"/>
+                        </td>
+                        <td><span t-field="line.price_total"/></td>
+                    </tr>
+                    <t t-set="total_units" t-value="total_units + line.quantity"/>
+                    <t t-set="total_tax" t-value="total_tax + (line.quantity * line.price_unit * (line.tax_ids[0].amount / 100) if line.tax_ids else 0)"/>
+                </t>
+            </tbody>
+            <tfoot>
+                <tr>
+                    <td colspan="1"><strong>Total Unidades del Pedido</strong></td>
+                    <td><strong><span t-esc="total_units"/></strong></td>
+                    <td></td>
+                    <td></td>
+                    <td><strong><span t-esc="total_tax"/></strong></td>
+                    <td></td>
+                </tr>
+                <tr>
+                    <td colspan="4"><strong>Capital Amortizado</strong></td>
+                    <td colspan="2"><strong><span t-esc="0.0"/></strong></td> <!-- Capital amortizado -->
+                </tr>
+                <tr>
+                    <td colspan="4"><strong>Total Dinero Pendiente de Pago</strong></td>
+                    <td colspan="2"><strong><span t-esc="0.0"/></strong></td> <!-- Total dinero pendiente -->
+                </tr>
+            </tfoot>
+        </table>
+
+        <!-- fecha de pago -->
+        <div class="payment-date" style="margin-top: 20px;">
+            <strong>Fecha de Pago:</strong>
+            <span t-field="o.payment_date" t-if="o.state == 'paid'"/>
+        </div>
+
+        <!-- IMAGEN de factura pagada -->
+        <div style="text-align: center; margin-top: 15px;">
+            <t t-if="o.state == 'paid'">
+                <img 
+                src="https://media.giphy.com/media/jpcXipl3oSBu1n9y61/giphy.gif" 
+                alt="Factura Pagada" 
+                style="max-width: 100%; height: auto;"
+                />
+            </t>
+        </div>
+        <!--para probar que la imagen sale así no esté pagada-->
+        <img 
+                src="https://media.giphy.com/media/jpcXipl3oSBu1n9y61/giphy.gif" 
+                alt="Factura Pagada" 
+                style="max-width: 100%; height: auto;"
+                />
+        
+    </t>
+</t>
